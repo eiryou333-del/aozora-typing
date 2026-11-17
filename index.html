@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>わたしの文学タイピング</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fff5f8;
+      color: #493b42;
+      padding: 24px;
+      line-height: 1.8;
+    }
+    main {
+      max-width: 600px;
+      margin: auto;
+    }
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 120px;
+      font-size: 18px;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>📚 わたしの文学タイピング</h1>
+    <p>まずは入力を試してみよう！</p>
+    <h2>練習問題</h2>
+    <p id="question">吾輩は猫である。</p>
+    <textarea id="answer"
+      placeholder="ここにフリック入力してね"></textarea>
+    <p id="result">入力待ち...</p>
+  </main>
+  <script>
+    const question =
+      document.getElementById("question").textContent;
+    const answer = document.getElementById("answer");
+    const result = document.getElementById("result");
+
+    answer.addEventListener("input", () => {
+      if (answer.value === question) {
+        result.textContent = "🎉 正解！";
+      } else {
+        result.textContent =
+          "入力中：" + answer.value.length + "文字";
+      }
+    });
+  </script>
+</body>
+</html>
