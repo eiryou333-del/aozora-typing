@@ -1,55 +1,12 @@
-
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>わたしの文学タイピング</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #fff5f8;
-      color: #493b42;
-      padding: 24px;
-      line-height: 1.8;
-    }
-    main {
-      max-width: 600px;
-      margin: auto;
-    }
-    textarea {
-      box-sizing: border-box;
-      width: 100%;
-      min-height: 120px;
-      font-size: 18px;
-      padding: 12px;
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>📚 わたしの文学タイピング</h1>
-    <p>まずは入力を試してみよう！</p>
-    <h2>練習問題</h2>
-    <p id="question">吾輩は猫である。</p>
-    <textarea id="answer"
-      placeholder="ここにフリック入力してね"></textarea>
-    <p id="result">入力待ち...</p>
-  </main>
-  <script>
-    const question =
-      document.getElementById("question").textContent;
-    const answer = document.getElementById("answer");
-    const result = document.getElementById("result");
-
-    answer.addEventListener("input", () => {
-      if (answer.value === question) {
-        result.textContent = "🎉 正解！";
-      } else {
-        result.textContent =
-          "入力中：" + answer.value.length + "文字";
-      }
-    });
-  </script>
-</body>
-</html>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>文学タイピング</title><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff5f8;color:#493b42;margin:0;padding:20px;line-height:1.7}main{max-width:650px;margin:auto}section{background:white;border-radius:16px;padding:18px;box-shadow:0 2px 12px #e8cbd555}textarea{width:100%;box-sizing:border-box;font-size:18px;min-height:120px;border:1px solid #d6b8c4;border-radius:10px;padding:12px}button{background:#a54e77;color:white;border:0;border-radius:9px;padding:10px 16px;font-size:16px}progress{width:100%;height:18px}#prompt{white-space:pre-wrap;overflow-wrap:anywhere}#status{font-weight:bold}small{color:#806975}</style></head><body><main><h1>📚 わたしの文学タイピング</h1><section><h2>練習作品</h2><p><small>まずはサンプルで自動保存を確認しよう</small></p><progress id="progress" max="100" value="0"></progress><p id="count"></p><p id="prompt"></p><textarea id="answer" placeholder="ここに漢字変換しながら入力してね" spellcheck="false"></textarea><p id="status" aria-live="polite"></p><button id="reset" type="button">最初からやり直す</button><p><small>この端末・ブラウザ内に保存します。サイトデータを消すと進捗も消えます。</small></p></section></main><script>
+'use strict';
+const passages=['吾輩は猫である。名前はまだ無い。','どこで生れたかとんと見当がつかぬ。','何でも薄暗いじめじめした所でニャーニャー泣いていた事だけは記憶している。'];
+const storageKey='aozora-typing-demo-v1';
+const progress=document.querySelector('#progress'),count=document.querySelector('#count'),prompt=document.querySelector('#prompt'),answer=document.querySelector('#answer'),status=document.querySelector('#status');
+let state={index:0,draft:''};
+try{const saved=JSON.parse(localStorage.getItem(storageKey));if(saved&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<=passages.length&&typeof saved.draft==='string'){state=saved;}}catch(e){}
+function save(){try{localStorage.setItem(storageKey,JSON.stringify(state));return true}catch(e){status.textContent='保存できません。Safariの設定を確認してください。';return false}}
+function render(){const finished=state.index===passages.length;const total=passages.reduce((n,s)=>n+s.length,0);const done=passages.slice(0,state.index).reduce((n,s)=>n+s.length,0)+(finished?0:Math.min(state.draft.length,passages[state.index].length));progress.value=Math.round(done/total*100);count.textContent=`${done} / ${total} 文字（${progress.value}%）`;prompt.textContent=finished?'🎉 全文入力完了！':passages[state.index];answer.hidden=finished;answer.disabled=finished;answer.value=finished?'':state.draft;if(finished)status.textContent='おめでとう！100%達成！';else if(!status.textContent.startsWith('保存できません'))status.textContent=`第${state.index+1}段落 / ${passages.length}段落`}
+answer.addEventListener('input',()=>{if(state.index>=passages.length)return;const target=passages[state.index];const typed=answer.value;state.draft=typed;const matched=typed===target;if(matched){state.index++;state.draft='';}const saved=save();status.textContent=saved?(matched?'段落クリア！':target.startsWith(typed)?'入力中（保存済み）':'原文と違う部分があります（保存済み）'):'保存できません。';render();});
+document.querySelector('#reset').addEventListener('click',()=>{if(!confirm('練習の進捗を消して最初から始めますか？'))return;state={index:0,draft:''};save();status.textContent='';render()});render();
+</script></body></html>
