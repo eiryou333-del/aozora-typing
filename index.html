@@ -66,7 +66,7 @@ function episodeBodies(item,full){
   const length=Number(ep.characters)||0;
   let start=pos;
   let body=full.slice(start,start+length);
-  pos=start+length+(i<item.episodes.length-1?(full.slice(start+length,start+length+2)==='\n\n'?2:1):0);
+  pos=start+length+(i<item.episodes.length-1?(full.slice(start+length,start+length+4)==='\\n\\n'?4:full.slice(start+length,start+length+2)==='\n\n'?2:1):0);
   return body;
  });
 }
@@ -108,12 +108,12 @@ $('cancelEpisode').addEventListener('click',()=>{$('episodeEditor').style.displa
 async function replaceEpisode(id,i,newBody,newTitle,remove=false){
  const item=catalogue.find(x=>x.id===id);if(!item||item.kind!=='narou')throw Error('対象がありません');
  const full=await dbGet(bkey(id))||'',oldParts=episodeBodies(item,full);
- if(oldParts.length!==item.episodes.length||!(['\n','\n\n'].some(sep=>oldParts.join(sep)===full)))throw Error('本文の境界を確認できません。変更を中止しました。');
+ if(oldParts.length!==item.episodes.length||!(['\n','\n\n','\\n\\n'].some(sep=>oldParts.join(sep)===full)))throw Error('本文の境界を確認できません。変更を中止しました。');
  const oldChunks=splitText(full),p=getState(id,oldChunks.length);
  const protectedText=oldChunks.slice(0,p.index).join('');
  const updatedParts=oldParts.slice();
  if(remove)updatedParts.splice(i,1);else updatedParts[i]=newBody;
- const updated=updatedParts.join(full.includes('\n\n')?'\n\n':'\n'),newChunks=splitText(updated);
+ const sep=full.includes('\\n\\n')?'\\n\\n':full.includes('\n\n')?'\n\n':'\n';const updated=updatedParts.join(sep),newChunks=splitText(updated);
  // Completed questions and draft must remain attached to the same text.
  if(newChunks.slice(0,p.index).join('')!==protectedText||newChunks.slice(0,p.index).some((v,j)=>v!==oldChunks[j])||
     (p.draft&&newChunks[p.index]!==oldChunks[p.index]))
@@ -155,7 +155,7 @@ $('deleteBook').addEventListener('click',async()=>{
 $('narouAdd').addEventListener('click',async()=>{
  const title=$('narouTitle').value.trim(),author=$('narouAuthor').value.trim(),
  num=Number($('narouNumber').value),ep=$('narouEpisode').value.trim(),
- body=$('narouBody').value.replace(/\\r\\n?/g,'\\n').trim(),msg=$('narouMessage');
+ body=$('narouBody').value.replace(/\r\n?/g,'\n').trim(),msg=$('narouMessage');
  if(!title||!author||!Number.isSafeInteger(num)||num<1||!ep||!body){msg.textContent='作品名・作者・話数・エピソード名・本文を入力してね。';return}
  if(body.length<10){msg.textContent='本文が短すぎるようです。';return}
  const existing=catalogue.find(x=>x.kind==='narou'&&x.title===title&&x.author===author);
@@ -166,11 +166,11 @@ $('narouAdd').addEventListener('click',async()=>{
  try{
    const id=existing?.id||('narou-'+Date.now());
    const old=existing?(await dbGet(bkey(id))||''):'';
-   const updated=old?old+'\\n\\n'+body:body;
+   const updated=old?old+'\n\n'+body:body;
    // Preserve the existing completed chunks and in-progress draft.
    const oldChunks=old?splitText(old):[];
    const newChunks=splitText(updated);
-   if(old&&newChunks.slice(0,oldChunks.length).some((v,i)=>v!==oldChunks[i]))throw Error('既存の問題区切りが変化しました。追加を中止しました。');
+   if(old&&(newChunks.length<oldChunks.length||newChunks.slice(0,oldChunks.length).some((v,i)=>v!==oldChunks[i])))throw Error('既存の問題区切りが変化しました。追加を中止しました。');
    await dbSet(bkey(id),updated);
    if(existing){existing.episodes.push({number:num,title:ep,characters:body.length})}
    else catalogue.push({id,title,author,kind:'narou',episodes:[{number:num,title:ep,characters:body.length}]});
